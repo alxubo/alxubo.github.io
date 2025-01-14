@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVM</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <button id="class1Btn" class="btn active">Красный</button>
+            <button id="class2Btn" class="btn">Синий</button>
+            <select id="datasetSelect" class="select">
+                <option value="linearSeparable">Линейно разделимые</option>
+                <option value="circular">Круговые</option>
+                <option value="spiral">Спираль</option>
+                <option value="xor">XOR Шаблон</option>
+                <option value="polynomial">Полиномиальная граница</option>
+            </select>
+            <button id="trainBtn" class="btn train">Обучить SVM</button>
+            
+            <select id="modeSelect" class="select">
+                <option value="add">Добавить точки</option>
+                <option value="delete">Удалить точки</option>
+                <option value="move">Переместить точки</option>
+                <option value="changeClass">Изменить класс точки</option>
+            </select>
+            
+            <div class="kernel-controls">
+                <select id="kernelSelect" class="select">
+                    <option value="linear">Линейное ядро</option>
+                    <option value="polynomial">Полиномиальное ядро</option>
+                    <option value="rbf">RBF ядро</option>
+                </select>
+                
+                <div id="kernelParams" class="kernel-params">
+                    <div class="param-group" id="polyParams" style="display: none;">
+                        <label>Степень:</label>
+                        <input type="number" id="polyDegree" value="2" min="2" max="5" class="param-input">
+                    </div>
+                    
+                    <div class="param-group" id="rbfParams" style="display: none;">
+                        <label>Гамма:</label>
+                        <input type="number" id="rbfGamma" value="0.1" min="0.01" max="10" step="0.1" class="param-input">
+                    </div>
+                </div>
+                
+                <div class="param-group">
+                    <label>Регуляризация:</label>
+                    <input type="number" id="regularization" value="1" min="0.1" max="10" step="0.1" class="param-input">
+                </div>
+                
+                <div class="param-group">
+                    <label>Максимально итераций:</label>
+                    <input type="number" id="maxIterations" value="1000" min="100" max="5000" step="100" class="param-input">
+                </div>
+            </div>
+        
+        </div>
+        <div class="canvas-container">
+            <canvas id="canvasForDrawing"></canvas>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" data-action="delete">Удалить точку</div>
+        <div class="context-menu-item" data-action="changeClass">Изменить класс</div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="canvas.js"></script>
+    <script src="kernels.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
