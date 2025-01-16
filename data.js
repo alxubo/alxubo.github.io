@@ -85,6 +85,35 @@ const generateDatasets = (width, height) => {
       { x: centerX - spread/2, y: centerY - spread/2, class: -1 },
       { x: centerX + spread/3, y: centerY + spread/3, class: -1 },
       { x: centerX + spread/2, y: centerY + spread/2, class: -1 }
-    ]
+    ],
+
+    linearRegularization: [
+      { x: centerX - spread/3, y: centerY - spread/3, class: 1 },
+      { x: centerX - spread/2.8, y: centerY - spread/2.8, class: 1 },
+      { x: centerX - spread/2.6, y: centerY - spread/2.6, class: 1 },
+      { x: centerX - spread/2.4, y: centerY - spread/2.4, class: 1 },
+      { x: centerX - spread/4, y: centerY + spread/6, class: 1 },
+      
+      { x: centerX + spread/3, y: centerY + spread/3, class: -1 },
+      { x: centerX + spread/2.8, y: centerY + spread/2.8, class: -1 },
+      { x: centerX + spread/2.6, y: centerY + spread/2.6, class: -1 },
+      { x: centerX + spread/2.4, y: centerY + spread/2.4, class: -1 }
+    ],
+
+
+    linearIterations: [
+    { x: centerX - spread/2.5, y: centerY - spread/2.5, class: 1 },
+    { x: centerX - spread/3.0, y: centerY - spread/3.0, class: 1 },
+    { x: centerX - spread/3.5, y: centerY - spread/3.5, class: 1 },
+    { x: centerX, y: centerY - spread/5, class: 1 },
+    { x: centerX - spread/4, y: centerY, class: 1 },
+    { x: centerX - spread/10, y: centerY - spread/10, class: 1 },
+    { x: centerX + spread/2.5, y: centerY + spread/2.5, class: -1 },
+    { x: centerX + spread/3.0, y: centerY + spread/3.0, class: -1 },
+    { x: centerX + spread/3.5, y: centerY + spread/3.5, class: -1 },
+    { x: centerX + spread/10, y: centerY + spread/10, class: -1 },
+    { x: centerX, y: centerY + spread/5, class: -1 },
+    { x: centerX + spread/4, y: centerY, class: -1 }
+   ],
   };
 };
