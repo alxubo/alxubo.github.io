@@ -315,11 +315,13 @@ class KernelSVM {
         return this.computeF(normalizedPoint, this.normalizedPoints, this.alphas, this.b);
     }
 
-    generateDecisionBoundary(width, height, gridResolution = 50) {
+    generateDecisionBoundary(width, height) {
         if (!this.trained) {
             throw new Error('Model must be trained before generating decision boundary');
         }
 
+        const gridResolution = Math.max(width, height) / 4
+        
         const stepX = width / gridResolution;
         const stepY = height / gridResolution;
         const boundaryPoints = [];

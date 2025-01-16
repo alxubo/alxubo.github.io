@@ -115,9 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 svmLine = result;
                 lambdas = result.lambdas;
             } else {
-                let grid = svm.generateDecisionBoundary(canvas.width, canvas.height, 25);
+                let grid = svm.generateDecisionBoundary(canvas.width, canvas.height);
                 svmLine = { grid };
-                lambdas = svm.alpha || [];
+                lambdas = result.lambdas;
             }
             render();
             

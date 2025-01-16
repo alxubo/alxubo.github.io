@@ -8,6 +8,7 @@ const drawPoint = (ctx, point, lambda = null) => {
     ctx.stroke();
 
     if (lambda !== null) {
+        ctx.fillStyle = '#fff';
         ctx.fillText(`lambda: ${lambda.toFixed(3)}`, point.x + 20, point.y);
     }
 };
