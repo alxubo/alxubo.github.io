@@ -92,7 +92,7 @@ class KernelSVM {
         const E2 = errors[i2];
         const s = y1 * y2;
 
-        // Calculate bounds
+        // Calculate bounds with strict C enforcement
         let L, H;
         if (y1 !== y2) {
             L = Math.max(0, alpha2 - alpha1);
@@ -102,7 +102,7 @@ class KernelSVM {
             H = Math.min(this.C, alpha1 + alpha2);
         }
         
-        if (L >= H) return false;
+        if (L >= H - this.eps) return false;
 
         // Compute kernel values
         const k11 = this.computeKernel(points[i1], points[i1]);
@@ -110,30 +110,50 @@ class KernelSVM {
         const k22 = this.computeKernel(points[i2], points[i2]);
         const eta = 2 * k12 - k11 - k22;
 
-        // Calculate new alpha2
+        // Calculate new alpha2 with improved numerics
         let a2;
-        if (eta < 0) {
+        if (eta < -this.eps) {  // Строгая проверка на отрицательность
             a2 = alpha2 - y2 * (E1 - E2) / eta;
+            
+            // Более строгое клиппирование
             if (a2 < L) a2 = L;
             else if (a2 > H) a2 = H;
+            
+            // Проверка на численную стабильность
+            if (a2 < 1e-8) a2 = 0;
+            if (Math.abs(a2 - this.C) < 1e-8) a2 = this.C;
         } else {
             return false;
         }
 
-        if (Math.abs(a2 - alpha2) < this.eps * (a2 + alpha2 + this.eps)) {
+        // Более строгая проверка на значимость изменения
+        if (Math.abs(a2 - alpha2) < this.eps * Math.max(Math.abs(a2), Math.abs(alpha2), 1.0)) {
             return false;
         }
 
-        // Calculate new alpha1
+        // Calculate new alpha1 with bounds checking
         const a1 = alpha1 + s * (alpha2 - a2);
+        
+        // Ensure alpha1 stays within bounds
+        if (a1 < 0 || a1 > this.C) return false;
 
-        // Update bias
-        const b1 = b - E1 - y1 * (a1 - alpha1) * k11 - y2 * (a2 - alpha2) * k12;
-        const b2 = b - E2 - y1 * (a1 - alpha1) * k12 - y2 * (a2 - alpha2) * k22;
+        // Update bias with improved stability
+        const b1 = b - E1 
+                    - y1 * (a1 - alpha1) * k11 
+                    - y2 * (a2 - alpha2) * k12;
+        const b2 = b - E2 
+                    - y1 * (a1 - alpha1) * k12 
+                    - y2 * (a2 - alpha2) * k22;
 
+        // More precise bias selection
         let newB;
-        if (0 < a1 && a1 < this.C) newB = b1;
-        else if (0 < a2 && a2 < this.C) newB = b2;
+        const t1 = y1 * a1;
+        const t2 = y2 * a2;
+
+        if (a1 > this.eps && a1 < this.C - this.eps) newB = b1;
+        else if (a2 > this.eps && a2 < this.C - this.eps) newB = b2;
+        else if (t1 > t2) newB = b1;
+        else if (t2 > t1) newB = b2;
         else newB = (b1 + b2) / 2;
 
         // Update alphas
@@ -142,9 +162,7 @@ class KernelSVM {
 
         // Update error cache
         for (let i = 0; i < points.length; i++) {
-            if (0 < alphas[i] && alphas[i] < this.C) {
-                errors[i] = this.computeF(points[i], points, alphas, newB) - points[i].class;
-            }
+            errors[i] = this.computeF(points[i], points, alphas, newB) - points[i].class;
         }
 
         this.b = newB;
@@ -190,22 +208,24 @@ class KernelSVM {
         const X = this.normalize(points);
         const n = X.length;
         
-        // Initialize variables
-        const alphas = new Array(n).fill(0.1);  // Initialize with small non-zero values
+        // Initialize variables with zeros
+        const alphas = new Array(n).fill(0);
         const errors = new Array(n).fill(0);
         this.b = 0;
         
-        // Initialize error cache
+        // Initialize error cache with proper class weights
         for (let i = 0; i < n; i++) {
-            errors[i] = this.computeF(X[i], X, alphas, this.b) - X[i].class;
+            errors[i] = -X[i].class; // Initially all predictions are 0
         }
 
         let numChanged = 0;
         let examineAll = true;
-        
-        // Main training loop
+        let iterCount = 0;
+
+        // Main training loop with improved convergence checks
         for (let iter = 0; iter < this.maxIterations; iter++) {
             numChanged = 0;
+            iterCount++;
 
             if (examineAll) {
                 // Loop over all points
@@ -213,21 +233,38 @@ class KernelSVM {
                     numChanged += this.examineExample(i, X, alphas, errors);
                 }
             } else {
-                // Loop over points where alpha is not 0 or C
+                // First try points with non-bound alphas
                 for (let i = 0; i < n; i++) {
-                    if (alphas[i] > 0 && alphas[i] < this.C) {
+                    if (alphas[i] > this.eps && alphas[i] < this.C - this.eps) {
+                        numChanged += this.examineExample(i, X, alphas, errors);
+                    }
+                }
+                
+                // If no progress, try all points
+                if (numChanged === 0) {
+                    for (let i = 0; i < n; i++) {
                         numChanged += this.examineExample(i, X, alphas, errors);
                     }
                 }
             }
 
+            // Update strategy
             if (examineAll) {
                 examineAll = false;
             } else if (numChanged === 0) {
                 examineAll = true;
             }
 
-            if (numChanged === 0 && !examineAll) break;
+            // Convergence checks
+            let violationSum = 0;
+            for (let i = 0; i < n; i++) {
+                if (alphas[i] < -this.eps || alphas[i] > this.C + this.eps) {
+                    violationSum += Math.min(Math.abs(alphas[i]), Math.abs(alphas[i] - this.C));
+                }
+            }
+
+            // Break if constraints are satisfied and no progress
+            if (violationSum < this.eps && numChanged === 0) break;
         }
 
         // Store the training results
